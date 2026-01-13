@@ -241,7 +241,7 @@ app.post("/api/trade/topstep/order", async (req: Request, res: Response) => {
     } catch (syncError) {
       console.error(
         "[SYNC] Failed to sync trades after order:",
-        syncError.message
+        syncError instanceof Error ? syncError.message : String(syncError)
       );
     }
   } catch (error) {
@@ -447,7 +447,7 @@ cron.schedule("0 0 * * *", async () => {
   } catch (error) {
     console.error(
       "[CRON] Failed to refresh Topstep session token:",
-      error.message
+      error instanceof Error ? error.message : String(error)
     );
   }
 });
@@ -498,7 +498,7 @@ async function initializeTopstepSessionAndAccount() {
     );
     if (Array.isArray(accountRes.data.accounts)) {
       const tradable = accountRes.data.accounts.find(
-        (acc) =>
+        (acc: any) =>
           acc.canTrade &&
           acc.name
             .toUpperCase()
@@ -524,7 +524,7 @@ async function initializeTopstepSessionAndAccount() {
   } catch (error) {
     console.error(
       "[INIT] Failed to initialize Topstep session/account/contract:",
-      error.message
+      error instanceof Error ? error.message : String(error)
     );
   }
 }
@@ -594,7 +594,7 @@ async function performInitialTradeSync() {
   } catch (error) {
     console.error(
       "[INIT] Failed to perform initial trade sync:",
-      error.message
+      error instanceof Error ? error.message : String(error)
     );
     // Even if initial sync fails, mark it as done so regular sync can begin
     initialSyncDone = true;
