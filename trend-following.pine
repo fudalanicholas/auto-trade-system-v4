@@ -1,0 +1,203 @@
+//@version = 6
+//====================================================================================================================
+//  [NQ1!][5m][EMA-DONCHIAN-ADX-VWAP][v2]  — $200 risk per trade, $200 max drawdown per trade
+//====================================================================================================================
+//  © 2025 fudala – MPL-2.0
+//  Objective: Max Sharpe & Profit Factor (2024-07-24 → 2025-07-24) with Max DD < $2 000
+//====================================================================================================================
+strategy("[NQ1!][5m][EMA-DONCHIAN-ADX-VWAP][v3]",
+         overlay              = true,
+         default_qty_type     = strategy.fixed,
+         default_qty_value    = 1,                  // overridden per-entry with qty=
+         initial_capital      = 1000000,
+         currency             = currency.USD,
+         margin_long          = 100,
+         margin_short         = 100,
+         slippage             = 1,
+         commission_type      = strategy.commission.cash_per_contract,
+         commission_value     = 2.8,
+         calc_on_every_tick   = true,
+         calc_on_order_fills  = true)
+
+//────────────────────────────────────────────────────────────────────────────
+// Inputs
+//────────────────────────────────────────────────────────────────────────────
+fastEMALen      = input.int(20,  "EMA Fast Len",   1)
+slowEMALen      = input.int(200, "EMA Slow Len",   1)
+smaFastLen      = input.int(50,  "SMA Fast Len",   1)
+smaSlowLen      = input.int(200, "SMA Slow Len",   1)
+donLen          = input.int(20,  "Donchian Len",   1)
+adxLen          = input.int(14,  "ADX Len",        1)
+adxThresh       = input.int(25,  "ADX ≥",          1)
+atrLen          = input.int(10,  "ATR Len",        1)
+atrStopMult     = input.float(0.6, "ATR Stop ×",       0.1)
+atrBreakevenM   = input.float(0.8, "ATR BE ×",         0.1)
+atrTrailMult    = input.float(0.6, "ATR Trail ×",      0.1)
+stopCapPts      = input.float(80,  "Absolute Stop Cap (pts)")
+volThresh       = input.float(0.004, "Max ATR / Close")   // <= USED NOW
+maxHoldBars     = input.int(24,   "Max Hold (bars)",  1)
+dailyLossHalt   = input.int(700,  "Daily Loss Halt $",1)
+useTimeFilter   = input.bool(true,"Use ToD windows")
+
+// Per-trade risk and hard cap
+riskDollars     = input.float(450, "Risk per Trade ($)", step = 25)
+maxTradeLoss    = input.float(250, "Max Drawdown per Trade ($)", step = 25)
+
+//────────────────────────────────────────────────────────────────────────────
+// Helpers */
+//────────────────────────────────────────────────────────────────────────────
+roundToTick(x) =>
+    t = syminfo.mintick
+    math.round(x / t) * t
+
+//────────────────────────────────────────────────────────────────────────────
+// Indicators Filters */
+//────────────────────────────────────────────────────────────────────────────
+emaFast   = ta.ema(close, fastEMALen)
+emaSlow   = ta.ema(close, slowEMALen)
+smaFast   = ta.sma(close, smaFastLen)
+smaSlow   = ta.sma(close, smaSlowLen)
+donHigh   = ta.highest(high, donLen)[1]
+donLow    = ta.lowest(low,  donLen)[1]
+[plusDI, minusDI, adx] = ta.dmi(adxLen, adxLen)
+atr       = ta.atr(atrLen)
+
+// Daily session-anchored VWAP (intraday)
+vw        = ta.vwap
+
+// Session filter — Regular CME US session 08:30–15:00 CT
+inRTH = not na(time(timeframe.period, "0830-1500", "America/Chicago"))
+
+// Volatility gate (ATR as % of price) — NEW
+volRatio = close > 0 ? atr / close : na
+volOK    = not na(volRatio) and volRatio <= volThresh
+
+//────────────────────────────────────────────────────────────────────────────
+// Daily Loss Halt */
+//────────────────────────────────────────────────────────────────────────────
+var float dayPNL = 0.0
+var bool  tradingHalted = false
+
+newDay = ta.change(time("D")) != 0
+if newDay
+    dayPNL := 0.0
+    tradingHalted := false
+
+dayPNL += strategy.netprofit - nz(strategy.netprofit[1])
+if dayPNL <= -dailyLossHalt and strategy.position_size == 0
+    tradingHalted := true
+    strategy.cancel_all()
+
+//────────────────────────────────────────────────────────────────────────────
+// Entry Conditions (RTH + daily halt + VWAP + Vol gate) */
+//────────────────────────────────────────────────────────────────────────────
+longTrend    = emaFast > emaSlow and smaFast > smaSlow
+shortTrend   = emaFast < emaSlow and smaFast < smaSlow
+strongTrend  = adx > adxThresh
+
+longBreak    = close > donHigh
+shortBreak   = close < donLow
+
+aboveVWAP = close > vw
+belowVWAP = close < vw
+
+// Added volOK to both long/short bases
+baseLongCond  = strategy.position_size == 0 and inRTH and not tradingHalted and volOK and longTrend  and strongTrend and longBreak  and aboveVWAP
+baseShortCond = strategy.position_size == 0 and inRTH and not tradingHalted and volOK and shortTrend and strongTrend and shortBreak and belowVWAP
+
+//────────────────────────────────────────────────────────────────────────────
+// Dynamic Position Sizing risk per trade */
+//────────────────────────────────────────────────────────────────────────────
+pointVal        = syminfo.pointvalue                // e.g., NQ = $20/point/contract
+stopDistPts     = math.min(atrStopMult * atr, stopCapPts)
+riskPerContract = na(stopDistPts) or stopDistPts <= 0 ? na : stopDistPts * pointVal
+qtyFromRisk     = na(riskPerContract) or riskPerContract <= 0 ? 0 : math.floor(riskDollars / riskPerContract)
+
+longCond  = baseLongCond  and qtyFromRisk >= 1
+shortCond = baseShortCond and qtyFromRisk >= 1
+
+if longCond
+    strategy.entry("Long", strategy.long, qty = qtyFromRisk)
+if shortCond
+    strategy.entry("Short", strategy.short, qty = qtyFromRisk)
+
+//────────────────────────────────────────────────────────────────────────────
+// Risk Management ATR stop + 200 hard cap + BE trailing + kill-switch */
+//────────────────────────────────────────────────────────────────────────────
+longSL    = close - stopDistPts
+shortSL   = close + stopDistPts
+longBE    = close + atrBreakevenM * atr
+shortBE   = close - atrBreakevenM * atr
+trailOff  = atrTrailMult * atr
+
+posQty    = math.abs(strategy.position_size)
+pv        = syminfo.pointvalue
+dPts      = posQty > 0 ? maxTradeLoss / (pv * posQty) : na
+
+hardLongStop  = strategy.position_size > 0 and posQty > 0 ? strategy.position_avg_price - dPts : na
+hardShortStop = strategy.position_size < 0 and posQty > 0 ? strategy.position_avg_price + dPts : na
+
+// Use the *tighter* of ATR stop vs dollar cap
+finalLongStop  = na(hardLongStop)  ? longSL  : math.max(longSL,  hardLongStop)   // closer (higher) for longs
+finalShortStop = na(hardShortStop) ? shortSL : math.min(shortSL, hardShortStop)  // closer (lower) for shorts
+
+if strategy.position_size > 0
+    strategy.exit("LX-Stop", from_entry="Long", stop = roundToTick(finalLongStop), trail_points = trailOff, trail_offset = trailOff)
+    if high >= longBE
+        strategy.exit("LX-BE", from_entry="Long", stop = roundToTick(strategy.position_avg_price))
+
+if strategy.position_size < 0
+    strategy.exit("SX-Stop", from_entry="Short", stop = roundToTick(finalShortStop), trail_points = trailOff, trail_offset = trailOff)
+    if low <= shortBE
+        strategy.exit("SX-BE", from_entry="Short", stop = roundToTick(strategy.position_avg_price))
+
+// Intrabar fail-safe (kill-switch) in $
+unrlLossDollars =
+     strategy.position_size > 0 ? math.max(0, (strategy.position_avg_price - close) * pv * posQty)
+   : strategy.position_size < 0 ? math.max(0, (close - strategy.position_avg_price) * pv * posQty)
+   : 0.0
+
+if strategy.position_size > 0 and unrlLossDollars >= maxTradeLoss
+    strategy.close("Long")
+if strategy.position_size < 0 and unrlLossDollars >= maxTradeLoss
+    strategy.close("Short")
+
+// Max hold
+if strategy.position_size > 0 and bar_index - strategy.opentrades.entry_bar_index(0) >= maxHoldBars
+    strategy.close("Long")
+if strategy.position_size < 0 and bar_index - strategy.opentrades.entry_bar_index(0) >= maxHoldBars
+    strategy.close("Short")
+
+// Optional: annotate skipped signals when $ risk can't size 1 contract
+showSkipNotes = input.bool(false, "Annotate skipped signals")
+if showSkipNotes and (baseLongCond or baseShortCond) and qtyFromRisk < 1
+    label.new(bar_index, na, "Skipped: stop too wide for $" + str.tostring(riskDollars), style=label.style_label_down, color=color.red, textcolor=color.white, yloc=yloc.abovebar)
+
+//────────────────────────────────────────────────────────────────────────────
+// PLOTS */
+//────────────────────────────────────────────────────────────────────────────
+plot(emaFast,  color=color.teal,    title="EMA 20")
+plot(emaSlow,  color=color.blue,    title="EMA 200")
+plot(smaFast,  color=color.orange,  title="SMA 50")
+plot(smaSlow,  color=color.red,     title="SMA 200")
+plot(donHigh,  color=color.green,   title="Donchian High 20")
+plot(donLow,   color=color.maroon,  title="Donchian Low 20")
+plot(vw,       color=color.yellow,  title="VWAP")
+
+// Optional: show current ATR% to see the vol gate breathing
+showVolRatio = input.bool(false, "Show ATR/Close label")
+if showVolRatio and barstate.islast
+    label.new(bar_index, high, "ATR%: " + str.tostring(volRatio * 100, "0.00") + "% (≤ " + str.tostring(volThresh * 100, "0.00") + "%)", style=label.style_label_down, textcolor=color.white, color=color.new(color.blue, 0))
+
+//────────────────────────────────────────────────────────────────────────────
+// Performance Summary (Table) */
+//────────────────────────────────────────────────────────────────────────────
+if barstate.islastconfirmedhistory
+    profitFactor = strategy.grossloss != 0 ? strategy.grossprofit / math.abs(strategy.grossloss) : na
+    var table perf = table.new(position.top_right, 2, 6, frame_color=color.gray, bgcolor=color.new(color.black, 80))
+    table.cell(perf, 0, 0, "Net P&L",      text_halign=text.align_left)
+    table.cell(perf, 1, 0, str.tostring(strategy.netprofit,    "#,##0"))
+    table.cell(perf, 0, 1, "Max Drawdown", text_halign=text.align_left)
+    table.cell(perf, 1, 1, str.tostring(strategy.max_drawdown, "#,##0"))
+    table.cell(perf, 0, 3, "Win %",        text_halign=text.align_left)
+    table.cell(perf, 1, 3, str.tostring(strategy.wintrades / math.max(1, strategy.closedtrades) * 100, "0.0") + "%")

@@ -1,0 +1,313 @@
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2c3e50;
+  --accent-color: #e74c3c;
+  --bg-light: #f8f9fa;
+  --bg-dark: #343a40;
+  --text-light: #f8f9fa;
+  --text-dark: #343a40;
+  --border-color: #dee2e6;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --buy-color: #28a745;
+  --sell-color: #dc3545;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Remove table-specific margin */
+table {
+  margin-top: 0;
+}
+
+/* Option 1: Black text */
+.header-title-black {
+  color: black;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Option 2: Blue text */
+.header-title-blue {
+  color: #007BFF;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Option 3: Green text */
+.header-title-green {
+  color: #28A745;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Option 4: Red text */
+.header-title-red {
+  color: #DC3545;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h1 {
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+
+/* Navigation */
+.dashboard-nav {
+  display: flex;
+  background-color: white;
+  padding: 0.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nav-tab {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  cursor: pointer;
+  position: relative;
+  color: var(--text-dark);
+  transition: color 0.3s;
+  outline: none; /* Remove outline on focus */
+}
+
+.nav-tab:focus {
+  outline: none; /* Ensure no outline appears on focus */
+  box-shadow: none; /* Remove any box-shadow on focus */
+}
+
+.nav-tab:hover {
+  color: var(--primary-color);
+}
+
+.nav-tab.active {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--primary-color);
+}
+
+/* Dashboard Content */
+.dashboard-content {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f5f7fa;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-size: 1.4rem;
+  color: var(--secondary-color);
+}
+
+.filter-select {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.9rem;
+  color: #212529; /* Added - dark shade of black for text */
+}
+
+/* Table Styling */
+.table-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: var(--secondary-color);
+  font-weight: 500;
+  text-align: left;
+  padding: 1rem;
+  font-size: 0.95rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: #f8f9fa;
+}
+
+/* Buy/Sell styling */
+.side-buy {
+  color: var(--buy-color);
+  font-weight: 500;
+}
+
+.side-sell {
+  color: var(--sell-color);
+  font-weight: 500;
+}
+
+/* Profit/Loss styling */
+.profit {
+  color: var(--buy-color);
+  font-weight: 500;
+}
+
+.loss {
+  color: var(--sell-color);
+  font-weight: 500;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 0;
+  color: #6c757d;
+}
+
+/* Loading and Error States */
+.loading {
+  text-align: center;
+  padding: 3rem 0;
+  color: #6c757d;
+}
+
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: var(--accent-color);
+  background-color: rgba(231, 76, 60, 0.1);
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+/* Footer */
+.dashboard-footer {
+  padding: 1rem 2rem;
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Table Actions */
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* WebSocket Connection Indicator */
+.connection-indicator {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.connection-indicator .connected,
+.connection-status .connected {
+  color: var(--success-color);
+  font-weight: 500;
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.connection-indicator .connected::before,
+.connection-status .connected::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--success-color);
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.connection-indicator .disconnected,
+.connection-status .disconnected {
+  color: var(--accent-color);
+  font-weight: 500;
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.connection-indicator .disconnected::before,
+.connection-status .disconnected::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-color);
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.connection-status {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}

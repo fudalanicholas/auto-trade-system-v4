@@ -1,0 +1,244 @@
+.metrics-section {
+  margin-bottom: 2rem;
+}
+
+/* Remove decorative divider */
+.metrics-section::after,
+.metrics-section::before {
+  display: none;
+}
+
+.table-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Make the table fit within its container */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0;
+}
+
+thead {
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+th {
+  color: var(--secondary-color);
+  font-weight: 600;
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s;
+}
+
+th:hover {
+  background-color: #edf2f7;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  transition: background-color 0.2s;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background-color: #f1f6fa;
+}
+
+/* Alternating row colors */
+tr.odd-row td {
+  background-color: #ffffff;
+}
+
+tr.even-row td {
+  background-color: #f9fbfd;
+}
+
+/* Connection indicator */
+.connection-indicator {
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+}
+
+.connection-indicator .connected,
+.connection-status .connected {
+  color: var(--success-color);
+  position: relative;
+  padding-left: 18px;
+}
+
+.connection-indicator .connected::before,
+.connection-status .connected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: var(--success-color);
+  border-radius: 50%;
+}
+
+.connection-indicator .disconnected,
+.connection-status .disconnected {
+  color: var(--accent-color);
+  position: relative;
+  padding-left: 18px;
+}
+
+.connection-indicator .disconnected::before,
+.connection-status .disconnected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-color);
+  border-radius: 50%;
+}
+
+/* Table styling for profit/loss and side */
+.profit {
+  color: var(--buy-color);
+  font-weight: 600;
+}
+
+.loss {
+  color: var(--sell-color);
+  font-weight: 600;
+}
+
+.side-buy {
+  color: var(--buy-color);
+  font-weight: 600;
+  background-color: rgba(40, 167, 69, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.side-sell {
+  color: var(--sell-color);
+  font-weight: 600;
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #7f8fa4;
+  background-color: #f9fbfd;
+  border-radius: 8px;
+  border: 1px dashed #dee2e6;
+  margin: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(50%);
+  }
+}
+
+.empty-state p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+/* Loading and Error States */
+.loading {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #7f8fa4;
+  position: relative;
+}
+
+.loading::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(52, 152, 219, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spinner 1s linear infinite;
+  position: absolute;
+  top: calc(50% - 40px);
+  left: calc(50% - 20px);
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--accent-color);
+  background-color: #fff8f8;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid var(--accent-color);
+  margin: 1.5rem;
+  font-weight: 500;
+}

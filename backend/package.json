@@ -1,0 +1,25 @@
+{
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "tsx --watch src/server.ts",
+    "setup": "node setup.js"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.14",
+    "tsx": "^4.20.3"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
+    "@types/ws": "^8.18.1",
+    "axios": "^1.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "node-cron": "^4.2.1",
+    "socket.io": "^4.8.1",
+    "sqlite3": "^5.1.7",
+    "ws": "^8.18.3"
+  }
+}
